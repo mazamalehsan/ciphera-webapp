@@ -1,0 +1,2 @@
+export const SALT_ROUNDS = 10
+export const PASSPHRASE_ITERATIONS = 310_000

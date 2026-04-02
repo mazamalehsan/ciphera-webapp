@@ -2,8 +2,13 @@ const API_SERVER_URL="http://localhost:4040"
 
 import axios from "axios"
 
+declare module 'axios' {
+    export interface InternalAxiosRequestConfig {
+        authToken?: string;
+    }
+}
 
-const httpClient  = axios.create({
+const httpClient = axios.create({
     baseURL: API_SERVER_URL,
     timeout: 15000,
     headers: {
@@ -11,16 +16,18 @@ const httpClient  = axios.create({
     }
 })
 
+
 httpClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("accessToken")
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
+        if (config.authToken) {
+            config.headers = config.headers || {}
+            config.headers.Authorization = `Bearer ${config.authToken}`
         }
         return config
     },
     (error) => Promise.reject(error)
 )
+
 
 httpClient.interceptors.response.use(
     (response) => response,
@@ -28,10 +35,14 @@ httpClient.interceptors.response.use(
         if (error.response) {
             return Promise.reject({
                 status: error.response.status,
-                message: error.response.data?.message || "Server error",
+                message:
+                    error.response.data?.message ||
+                    error.response.data?.error ||
+                    "Server error",
                 data: error.response.data
             })
         }
+
         return Promise.reject({
             status: 0,
             message: "Network error"
